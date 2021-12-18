@@ -172,6 +172,9 @@ public class ExceptionEvaluator {
 				continue;
 			}
 			l = l.substring(atIndex + 2).trim();
+			if(l.contains("//")) {
+				l = l.substring(l.indexOf("//")+2);
+			}
 			if (!l.startsWith("java.") && !l.startsWith("org.") && !l.startsWith("sun.")) {
 				if (l.contains("[") && l.contains("]")) {
 					business_stack = l.substring(0, l.indexOf("]") + 1).trim();
@@ -182,13 +185,29 @@ public class ExceptionEvaluator {
 				break;
 			}
 		}
-		String class_method = business_stack.substring(0, business_stack.indexOf("("));
-		String business_class = class_method.substring(0, class_method.lastIndexOf("."));
-		String business_method = class_method.replace(business_class, "").substring(1);
-		business_method = "<init>".equals(business_method) ? "Constructor" : business_method;
-		String line = confiscated ? "(confiscated)"
-				: business_stack.substring(business_stack.indexOf(".java:"), business_stack.indexOf(")"))
-						.replace(".java:", "");
+		if (business_stack == null && lines.length > 1) {
+			business_stack = "";
+			String l = lines[1];
+			if (l.contains("[") && l.contains("]")) {
+				business_stack = l.substring(0, l.indexOf("]") + 1).trim();
+			} else {
+				business_stack = l.substring(0, l.indexOf(")") + 1).trim();
+			}
+			confiscated = business_stack.contains("Unknown Source");
+		}
+		String class_method = "class";
+		String business_class = "class";
+		String business_method = "method";
+		String line = "-1";
+		if (business_stack.contains("(")) {
+			class_method = business_stack.substring(0, business_stack.indexOf("("));
+			business_class = class_method.substring(0, class_method.lastIndexOf("."));
+			business_method = class_method.replace(business_class, "").substring(1);
+			business_method = "<init>".equals(business_method) ? "Constructor" : business_method;
+			line = confiscated ? "(confiscated)"
+					: business_stack.substring(business_stack.indexOf(".java:"), business_stack.indexOf(")"))
+							.replace(".java:", "");
+		}
 		String hint = event.getHint().replace("{class}", business_class);
 		hint = hint.replace("{method}", business_method);
 		hint = hint.replace("{line}", line);
@@ -220,7 +239,7 @@ public class ExceptionEvaluator {
 		}
 		this.hint = hint;
 		this.todo = todo;
-		return hint;
+		return hint + todo;
 	}
 
 	@Override

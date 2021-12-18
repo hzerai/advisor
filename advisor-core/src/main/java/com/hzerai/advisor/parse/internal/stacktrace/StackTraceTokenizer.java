@@ -28,6 +28,8 @@ public class StackTraceTokenizer {
 			this.stackTrace = input.split(UNIX_LINE_SEPERATOR);
 		} else if (input.contains(WINDOWS_LINE_SEPERATOR)) {
 			this.stackTrace = input.split(WINDOWS_LINE_SEPERATOR);
+		}else {
+			this.stackTrace = input.split(System.lineSeparator());
 		}
 		this.size = this.stackTrace.length;
 	}

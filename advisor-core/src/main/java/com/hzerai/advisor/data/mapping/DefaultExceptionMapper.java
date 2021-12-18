@@ -35,7 +35,7 @@ public class DefaultExceptionMapper implements ExceptionMapper {
 		if (ec == null) {
 			Iterator<String> it = er.getCausedBy().iterator();
 			String cb;
-			String msg = "";
+			String msg = er.getMessage();
 			while (it.hasNext()) {
 				cb = it.next().trim();
 				cb = cb.replace("Caused by: ", "");

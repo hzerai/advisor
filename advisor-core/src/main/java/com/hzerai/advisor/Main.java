@@ -67,9 +67,14 @@ public class Main {
 						"Date input should have the format yyyy-MM-dd HH:mm:ss, your input was " + toDateString);
 			}
 		}
+		String out = props.getProperty("outputfile");
+		if (out == null) {
+			out = base_dir + "out" + File.separator + "advisor-output-"
+					+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")) + ".txt";
+		}
 		Session session = SessionBuilder.mode(SessionMode.Detached).database(props.getProperty("database"))
-				.sourcePath(props.getProperty("source")).outputFile(props.getProperty("outputfile")).toDate(toDate)
-				.fromDate(fromDate).recursive().build();
+				.sourcePath(props.getProperty("source")).outputFile(out).toDate(toDate).fromDate(fromDate).recursive()
+				.build();
 		session.print();
 	}
 

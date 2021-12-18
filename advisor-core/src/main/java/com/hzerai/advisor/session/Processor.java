@@ -142,6 +142,8 @@ public class Processor {
 					fos.write(output.getBytes());
 					fos.flush();
 				}
+				System.out.println();
+				System.out.println("\t Output file is : " + file.getAbsolutePath());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

@@ -13,4 +13,4 @@ In addition to quick troubleshooting Advisor lets you analyze logs based on your
 
 Save time, money and keep delivering amazing experiences to your customers.
 
-Get Advisor today 
+# Get Advisor today.

@@ -103,10 +103,10 @@ public class Processor {
 			if (!entry.isDirectory()) {
 				try (InputStream stream = zipSource.getUnderlyingFile().getInputStream(entry)) {
 					Logger.getLogger("Advisor").log(Level.INFO,
-							"Found file : " + zipSource.getPath() + File.separator + entry.getName());
+							"Found file : " + zipSource.getPath() + " - " + entry.getName());
 					LogParser parser = ParserFactory.getParser(new String(stream.readAllBytes()));
 					AnalysisOutput parseResult = parser.parse();
-					parseResult.setLogfile(zipSource.getPath());
+					parseResult.setLogfile(zipSource.getPath() + " - " + entry.getName());
 					output.add(parseResult);
 				} catch (IOException e) {
 					throw new ProcessException(e);
@@ -168,9 +168,8 @@ public class Processor {
 			sb.append(System.lineSeparator()).append("\t");
 			sb.append(seperator.substring(44));
 			sb.append(System.lineSeparator()).append("\t");
-			sb.append(
-					" ||||||||||||||||||||               " + out.getLogFile() + "                |||||||||||||||||||| ")
-					.append(System.lineSeparator()).append("\t");
+			sb.append(padRightSpaces("||||||||||||||||||||               " + out.getLogFile() + "                ", 112,
+					'|')).append(System.lineSeparator()).append("\t");
 			sb.append(seperator.substring(44));
 			sb.append(System.lineSeparator()).append("\t");
 			sb.append(seperator2.substring(44));

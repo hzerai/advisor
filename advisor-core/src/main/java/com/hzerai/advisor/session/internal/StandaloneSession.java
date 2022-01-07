@@ -16,9 +16,4 @@ public class StandaloneSession extends AbstractSession {
 		super(SessionMode.Standalone);
 	}
 
-	@Override
-	public <T> T analyse(Class<?> T) {
-		return null;
-	}
-
 }

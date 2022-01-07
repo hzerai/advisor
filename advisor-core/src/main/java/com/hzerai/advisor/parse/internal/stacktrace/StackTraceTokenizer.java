@@ -3,6 +3,8 @@
  */
 package com.hzerai.advisor.parse.internal.stacktrace;
 
+import java.util.regex.Matcher;
+
 /**
  * @author Habib Zerai
  *
@@ -60,7 +62,7 @@ public class StackTraceTokenizer {
 		if ((index + 1) < size) {
 			index++;
 			currentLine = stackTrace[index];
-			return currentLine;
+			return Matcher.quoteReplacement(currentLine);
 		}
 		return null;
 	}

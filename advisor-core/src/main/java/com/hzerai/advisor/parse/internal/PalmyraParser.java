@@ -24,9 +24,9 @@ public class PalmyraParser implements LogParser {
 	private static final String palmyraRealException = "(.*Exception)[:| ]\\s*(.*)";
 	private final StackTraceTokenizer lines;
 	private static final Pattern pattern = Pattern.compile(palmyraRegex);
-	private static final Matcher matcher = pattern.matcher("");
+	private final Matcher matcher = pattern.matcher("");
 	private static final Pattern palmyraRealExceptionpattern = Pattern.compile(palmyraRealException);
-	private static final Matcher palmyraRealExceptionmatcher = palmyraRealExceptionpattern.matcher("");
+	private final Matcher palmyraRealExceptionmatcher = palmyraRealExceptionpattern.matcher("");
 	private static final Map<String, Integer> mapper = new HashMap<>();
 	private static final Map<String, String> properties = new HashMap<>();
 
@@ -94,7 +94,7 @@ public class PalmyraParser implements LogParser {
 	}
 
 	public static boolean matches(String line) {
-		return matcher.reset(line).matches();
+		return pattern.matcher(line).matches();
 	}
 
 }

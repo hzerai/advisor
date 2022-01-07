@@ -48,6 +48,7 @@ public class Processor {
 	private LocalDateTime toDate;
 	private LocalDateTime fromDate;
 	private List<AnalysisOutput> output = new ArrayList<>();
+	private InputStream is;
 	public static String seperator = padRightSpaces(" ", 156, '=');
 	private static final Logger LOG = Logger.getAnonymousLogger();
 	private static final String LOGO = "\t          N	        NNNNNNNNNNNNNN      NN                 NN   NN   NNNNNNNNNNNN  NNNNNNNNNNNNNN    NNNNNNNNNNN   (TM)  \r\n"
@@ -69,13 +70,23 @@ public class Processor {
 		this.toDate = toDate;
 	}
 
+	public Processor(InputStream is, LocalDateTime fd, LocalDateTime td) {
+		this.is = is;
+		this.fromDate = fd;
+		this.toDate = td;
+	}
+
 	void process() {
 		LocalDateTime time = LocalDateTime.now();
 		Logger.getLogger("Advisor").log(Level.INFO, "Process starting ");
-		if (input == null) {
+		if (input != null) {
+			process(input);
+		} else if (is != null) {
+			process(is);
+		} else {
 			throw new ProcessException("source is null.");
 		}
-		process(input);
+
 		Logger.getLogger("Advisor").log(Level.INFO, "Process finished ");
 		Logger.getLogger("Advisor").log(Level.INFO,
 				"Process took " + (time.until(LocalDateTime.now(), ChronoUnit.SECONDS) + " seconds"));
@@ -123,6 +134,21 @@ public class Processor {
 		LogParser parser = ParserFactory.getParser(fileSource.read());
 		AnalysisOutput parseResult = parser.parse();
 		parseResult.setLogfile(fileSource.getPath());
+		output.add(parseResult);
+	}
+
+	private void process(InputStream is) {
+		String input = "";
+		try {
+			input = new String(is.readAllBytes());
+			is.close();
+		} catch (IOException e) {
+			throw new ProcessException(e);
+		}
+
+		LogParser parser = ParserFactory.getParser(input);
+		AnalysisOutput parseResult = parser.parse();
+		parseResult.setLogfile("Rest service");
 		output.add(parseResult);
 	}
 
@@ -216,6 +242,26 @@ public class Processor {
 		return sb.toString();
 	}
 
+	public List<ExceptionEvaluator> mapToList(Database db) {
+		List<ExceptionEvaluator> exceptions = new ArrayList<>();
+		final ExceptionMapper mapper = MappingFactory.getMapper(db);
+		for (AnalysisOutput out : output) {
+			for (TransientException er : out.getResult()) {
+				if (er.getName() == null && er.getCausedBy().isEmpty()) {
+					continue;
+				}
+				if (er.getDate() != null) {
+					if ((this.fromDate != null && !er.getDate().isAfter(this.fromDate))
+							|| (this.toDate != null && !er.getDate().isBefore(this.toDate))) {
+						continue;
+					}
+				}
+				exceptions.add(mapper.map(er));
+			}
+		}
+		return clean(exceptions);
+	}
+
 	public List<ExceptionEvaluator> clean(List<ExceptionEvaluator> set) {
 		return set.stream().collect(Collectors.toMap(this::createKey, Function.identity(), (old_, new_) -> {
 			((ExceptionEvaluator) new_).setChild((ExceptionEvaluator) old_);
@@ -225,7 +271,10 @@ public class Processor {
 	}
 
 	private String createKey(ExceptionEvaluator ex) {
-		return ex.getKey();
+		if(ex.getException().getMessage().equals("") || ex.getException().getMessage().matches("null|empty")) {
+			return ex.getException().getStackTrace();
+		}
+		return ex.getException().getMessage();
 	}
 
 	public String padRightSpaces(Object input, int padSize) {

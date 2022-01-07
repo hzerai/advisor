@@ -3,6 +3,7 @@
  */
 package com.hzerai.advisor.session;
 
+import java.io.InputStream;
 import java.time.LocalDateTime;
 
 import com.hzerai.advisor.data.DataManager;
@@ -26,6 +27,7 @@ public class SessionBuilder {
 	private LocalDateTime toDate;
 	private boolean isRecursive;
 	private boolean isRemote;
+	private InputStream is;
 
 	public static SessionBuilder mode(SessionMode mode) {
 		return new SessionBuilder(mode);
@@ -52,13 +54,18 @@ public class SessionBuilder {
 			throw new AdvisorException("Session build failed.");
 		}
 		try {
-			Processor processor = new Processor(SourceFactory.scanPath(sourcePath, isRecursive, isRemote), out,
-					fromDate, toDate);
+			Processor processor = null;
+			if (session instanceof DetachedSession) {
+				processor = new Processor(SourceFactory.scanPath(sourcePath, isRecursive, isRemote), out, fromDate,
+						toDate);
+				SessionFactory.registerGlobalSession(session);
+			} else if (session instanceof StandaloneSession) {
+				processor = new Processor(is, fromDate, toDate);
+			}
 			session.setProcessor(processor);
 		} catch (Exception e) {
 			throw new AdvisorException("Session build failed.", e);
 		}
-		SessionFactory.registerGlobalSession(session);
 		return session;
 	}
 
@@ -73,6 +80,14 @@ public class SessionBuilder {
 			throw new IllegalArgumentException("source path cannot be null.");
 		}
 		sourcePath = path;
+		return this;
+	}
+
+	public SessionBuilder inputStream(InputStream is) {
+		if (is == null) {
+			throw new IllegalArgumentException("inputStream cannot be null.");
+		}
+		this.is = is;
 		return this;
 	}
 

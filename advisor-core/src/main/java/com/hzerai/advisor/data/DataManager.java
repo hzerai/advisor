@@ -20,9 +20,9 @@ public class DataManager {
 		case Detached:
 			return new JsonDatabase(url);
 		case Attached:
-			break;
+			return new JsonDatabase(url);
 		case Standalone:
-			break;
+			return new JsonDatabase(url);
 		}
 		throw new IllegalArgumentException("session mode not specified.");
 	}

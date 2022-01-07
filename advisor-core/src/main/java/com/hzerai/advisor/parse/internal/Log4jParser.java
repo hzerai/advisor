@@ -20,9 +20,9 @@ import com.hzerai.advisor.parse.internal.stacktrace.StackTraceTokenizer;
  */
 public class Log4jParser implements LogParser {
 
-	private static final String log4gRegex = ".*(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}) *(ERROR|SEVERE|FATAL) *\\[(.*)\\] *\\((.{1,50})\\) *.*\\s(.*Exception)[:| ]\\s*(.*)";
+	private static final String log4gRegex = ".*(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}) *(ERROR|SEVERE|FATAL|INFO) *\\[(.*)\\] *\\((.{1,50})\\) *.*\\s(.*Exception)[:| ]\\s*(.*)";
 	private static final Pattern pattern = Pattern.compile(log4gRegex);
-	private static final Matcher matcher = pattern.matcher("");
+	private final Matcher matcher = pattern.matcher("");
 	private static final Map<String, Integer> mapper = new HashMap<>();
 	private static final Map<String, String> properties = new HashMap<>();
 	private final StackTraceTokenizer lines;
@@ -83,7 +83,7 @@ public class Log4jParser implements LogParser {
 	}
 
 	public static boolean matches(String line) {
-		return matcher.reset(line).matches();
+		return pattern.matcher(line).matches();
 	}
 
 }

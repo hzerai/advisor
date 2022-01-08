@@ -47,6 +47,8 @@ public class SessionBuilder {
 		default:
 			throw new IllegalArgumentException("session mode not specified.");
 		}
+		Database db = DataManager.getDatabase();
+		session.setDatabase(db);
 	}
 
 	public Session build() {
@@ -67,12 +69,6 @@ public class SessionBuilder {
 			throw new AdvisorException("Session build failed.", e);
 		}
 		return session;
-	}
-
-	public SessionBuilder database(String url) {
-		Database db = DataManager.getDatabase(url);
-		session.setDatabase(db);
-		return this;
 	}
 
 	public SessionBuilder sourcePath(String path) {

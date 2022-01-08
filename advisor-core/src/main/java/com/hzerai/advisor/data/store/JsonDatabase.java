@@ -28,13 +28,15 @@ public class JsonDatabase implements Database {
 	/**
 	 * @return
 	 */
-	public JsonDatabase(String url) {
+	public JsonDatabase() {
 		try {
 			exceptions = new TreeMap<>();
-			File file = new File(url);
+
 			ObjectMapper mapper = new ObjectMapper();
-			List<PersistentException> fromDb = mapper.readValue(file, new TypeReference<List<PersistentException>>() {
-			});
+			List<PersistentException> fromDb = mapper.readValue(
+					this.getClass().getClassLoader().getResourceAsStream("db.json"),
+					new TypeReference<List<PersistentException>>() {
+					});
 			for (PersistentException e : fromDb) {
 				String name = e.getName();
 				if (exceptions.containsKey(name)) {

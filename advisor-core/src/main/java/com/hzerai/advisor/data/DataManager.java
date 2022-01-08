@@ -12,17 +12,17 @@ import com.hzerai.advisor.session.SessionFactory;
  */
 public class DataManager {
 
-	public static Database getDatabase(String url) {
+	public static Database getDatabase() {
 		/**
 		 * some thing like this
 		 */
 		switch (SessionFactory.mode) {
 		case Detached:
-			return new JsonDatabase(url);
+			return new JsonDatabase();
 		case Attached:
-			return new JsonDatabase(url);
+			return new JsonDatabase();
 		case Standalone:
-			return new JsonDatabase(url);
+			return new JsonDatabase();
 		}
 		throw new IllegalArgumentException("session mode not specified.");
 	}

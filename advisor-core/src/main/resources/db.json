@@ -1,0 +1,206 @@
+[
+	{
+		"name": "java.sql.SQLException",
+		"events": [
+			{
+				"messageRegex": "Transaction cannot proceed: {1}",
+				"hint": "Transaction coudn't commit and has status {1}",
+				"todo": "Check for RuntimeException during the same transaction"
+			},
+			{
+				"messageRegex": "(.*)Error checking for a transaction(.*)",
+				"hint": "Transaction is probably not active",
+				"todo": "Check for RuntimeException during the same transaction"
+			}
+		]
+	},
+	{
+		"name": "javax.resource.ResourceException",
+		"events": [
+			{
+				"messageRegex": "Transaction cannot proceed: {1}",
+				"hint": "Transaction coudn't commit and has status {1}",
+				"todo": "Check for RuntimeException during the same transaction"
+			},
+			{
+				"messageRegex": "(.*)Error checking for a transaction(.*)",
+				"hint": "Transaction is probably not active",
+				"todo": "Check for RuntimeException during the same transaction"
+			}
+		]
+	},
+	{
+		"name": "java.lang.UnsupportedOperationException",
+		"events": [
+			{
+				"hint": "Either the method is not implemented and threw the exception or for unsupported logic reasons",
+				"todo": "Check your invocation for the method {class}.{method}",
+				"moduleName": "{module}"
+			}
+		]
+	},
+	{
+		"name": "org.hibernate.HibernateException",
+		"events": [
+			{
+				"hint": "invocation on null variable in {class}.{method}:{line}",
+				"todo": "check the variables in {class}.{method}:{line}",
+				"moduleName": "{module}"
+			}
+		]
+	},
+	{
+		"name": "java.lang.NullPointerException",
+		"events": [
+			{
+				"def": true,
+				"hint": "invocation on null variable (NPE)",
+				"todo": "check the variables in {class}.{method}:{line}",
+				"moduleName": "{module}"
+			}
+		]
+	},
+	{
+		"name": "java.lang.StackOverflowError",
+		"events": [
+			{
+				"def": true,
+				"hint": "Infinite loop detected",
+				"todo": "check the code for possible infinite loops: \n{stack}",
+				"moduleName": "{module}"
+			}
+		]
+	},
+	{
+		"name": "org.hibernate.PropertyValueException",
+		"events": [
+			{
+				"messageRegex": "not-null property references a null or transient value : {1}",
+				"hint": "The property {1} is either null and required or an aggregation that's not merged with the JPA Context",
+				"todo": "check the value of the property {1} before synchronizing its parent",
+				"moduleName": "Persistence"
+			}
+		]
+	},
+	{
+		"name": "java.util.ConcurrentModificationException",
+		"events": [
+			{
+				"hint": "Illegal access to database during flush .In general, the lifecycle method of a portable application should not invoke EntityManager or Query operations, access other entity instances, or modify relationships within the same persistence context. A lifecycle callback method may modify the non-relationship state of the entity on which it is invoked. ",
+				"todo": "Check your entity callbacks (pre/postInsert,pre/postUpdate,pre/postDelete) for illegal modifications .",
+				"ifExistInStack": "ActionQueue.executeActions",
+				"moduleName": "Persistence"
+			},
+			{
+				"hint": "An unmodifialble Collection was modified ",
+				"todo": "An unmodifialble Collection was modified at {class}.{method}:{line}",
+				"ifExistInStack": "UnmodifiableCollection"
+			},
+			{
+				"hint": "An unmodifialble Map was modified",
+				"todo": "An unmodifialble Map was modified at {class}.{method}:{line}",
+				"ifExistInStack": "UnmodifiableMap"
+			},
+			{
+				"def": true,
+				"hint": "An unmodifialble Object was modified",
+				"todo": "An unmodifialble Object was modified at {class}.{method}:{line}"
+			}
+		]
+	},
+	{
+		"name": "java.lang.NumberFormatException",
+		"events": [
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the MessageFormat.format({message})",
+				"hint": "MessageFormat.format method called with a wrong input : MessageFormat.format({message})",
+				"ifExistInStack": "MessageFormat,format"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the MessageFormat.parse({message})",
+				"hint": "MessageFormat.parse method called with a wrong input : MessageFormat.parse({message})",
+				"ifExistInStack": "MessageFormat,parse"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the MessageFormat method",
+				"hint": "MessageFormat method called with a wrong input : your input was {message}",
+				"ifExistInStack": "MessageFormat"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the new BigDecimal(Number n)",
+				"hint": "BigDecimal.valueOf method called with a wrong input : new BigDecimal(Number n)",
+				"ifExistInStack": "BigDecimal,valueOf"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the new BigDecimal({message})",
+				"hint": "BigDecimal constuctor called with a wrong input : new BigDecimal({message})",
+				"ifExistInStack": "BigDecimal,<init>"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for BigDecimal method",
+				"hint": "BigDecimal method called with a wrong input : your input was {message}",
+				"ifExistInStack": "BigDecimal"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the new Long({message})",
+				"hint": "Long constructor called with a wrong input : new Long({message})",
+				"ifExistInStack": "Long,<init>"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the Long.valueOf({message})",
+				"hint": "Long valueOf method called with a wrong input : Long.valueOf({message})",
+				"ifExistInStack": "Long,valueOf"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the Long.parseLong({message})",
+				"hint": "Long parseLong method called with a wrong input : Long.parseLong({message})",
+				"ifExistInStack": "Long,parse"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the Long method",
+				"hint": "Long method method called with a wrong input : your input was {message}",
+				"ifExistInStack": "Long"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the new Integer({message})",
+				"hint": "Integer constuctor called with a wrong input : new Integer({message})",
+				"ifExistInStack": "Integer,<init>"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the Integer.valueOf({message})",
+				"hint": "Integer valueOf method called with a wrong input : Integer.valueOf({message})",
+				"ifExistInStack": "Integer,valueOf"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the Integer.parseInt({message})",
+				"hint": "Integer parseInt method with a wrong input : Integer.parseInt({message})",
+				"ifExistInStack": "Integer,parse"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the Integer method",
+				"hint": "Integer method called with a wrong input : your input was {message}",
+				"ifExistInStack": "Integer"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the new Double({message})",
+				"hint": "Double constuctor called with a wrong input : new Double({message})",
+				"ifExistInStack": "Double,<init>"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the Double.valueOf({message})",
+				"hint": "Double valueOf method called with a wrong input : Double.valueOf({message})",
+				"ifExistInStack": "Double,valueOf"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the Double.parseDouble({message})",
+				"hint": "Double parseDouble method called with a wrong input : Double.parseDouble({message})",
+				"ifExistInStack": "Double,parse"
+			},
+			{
+				"todo": "Go to {class}.{method}:{line} and fix your input for the Double method",
+				"hint": "Double method called with a wrong input : your input was {message}",
+				"ifExistInStack": "Double"
+			}
+		]
+	}
+]

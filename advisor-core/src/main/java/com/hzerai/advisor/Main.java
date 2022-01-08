@@ -72,7 +72,7 @@ public class Main {
 			out = base_dir + "out" + File.separator + "advisor-output-"
 					+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")) + ".txt";
 		}
-		Session session = SessionBuilder.mode(SessionMode.Detached).database(props.getProperty("database"))
+		Session session = SessionBuilder.mode(SessionMode.Detached)
 				.sourcePath(props.getProperty("source")).outputFile(out).toDate(toDate).fromDate(fromDate).recursive()
 				.build();
 		session.print();

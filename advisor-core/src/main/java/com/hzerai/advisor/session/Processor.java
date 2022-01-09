@@ -47,6 +47,7 @@ public class Processor {
 	private String out = null;
 	private LocalDateTime toDate;
 	private LocalDateTime fromDate;
+	private String exceptionName;
 	private List<AnalysisOutput> output = new ArrayList<>();
 	private InputStream is;
 	public static String seperator = padRightSpaces(" ", 156, '=');
@@ -70,10 +71,26 @@ public class Processor {
 		this.toDate = toDate;
 	}
 
+	Processor(LogSource<?, ?> input, String out, LocalDateTime fromDate, LocalDateTime toDate, String exceptionName) {
+		this.input = input;
+		this.out = out;
+		this.fromDate = fromDate;
+		this.toDate = toDate;
+		this.exceptionName = exceptionName;
+	}
+
 	public Processor(InputStream is, LocalDateTime fd, LocalDateTime td) {
 		this.is = is;
 		this.fromDate = fd;
 		this.toDate = td;
+	}
+
+	public Processor(InputStream is, LocalDateTime fd, LocalDateTime td, String exceptionName) {
+		this.is = is;
+		this.fromDate = fd;
+		this.toDate = td;
+		this.exceptionName = exceptionName;
+
 	}
 
 	void process() {
@@ -250,6 +267,10 @@ public class Processor {
 				if (er.getName() == null && er.getCausedBy().isEmpty()) {
 					continue;
 				}
+				if (exceptionName != null && !(er.getName().contains(exceptionName)
+						|| er.getCausedBy().stream().anyMatch(e -> e.contains(exceptionName)))) {
+					continue;
+				}
 				if (er.getDate() != null) {
 					if ((this.fromDate != null && !er.getDate().isAfter(this.fromDate))
 							|| (this.toDate != null && !er.getDate().isBefore(this.toDate))) {
@@ -271,7 +292,7 @@ public class Processor {
 	}
 
 	private String createKey(ExceptionEvaluator ex) {
-		if(ex.getException().getMessage().equals("") || ex.getException().getMessage().matches("null|empty")) {
+		if (ex.getException().getMessage().equals("") || ex.getException().getMessage().matches("null|empty")) {
 			return ex.getException().getStackTrace();
 		}
 		return ex.getException().getMessage();

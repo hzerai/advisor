@@ -44,12 +44,13 @@ public class DefaultExceptionMapper implements ExceptionMapper {
 					cb = cb.substring(0, cb.indexOf("Exception") + 9);
 				}
 				ec = db.findByName(cb);
+				er.setMessage(msg);
+				er.setName(cb);
 				if (ec != null) {
-					er.setMessage(msg);
-					er.setName(cb);
 					break;
 				}
 			}
+
 		}
 		if (ec != null) {
 			PersistentEvent def = null;

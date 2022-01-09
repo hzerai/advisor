@@ -25,6 +25,7 @@ public class SessionBuilder {
 	private String out;
 	private LocalDateTime fromDate;
 	private LocalDateTime toDate;
+	private String exceptionName;
 	private boolean isRecursive;
 	private boolean isRemote;
 	private InputStream is;
@@ -62,7 +63,7 @@ public class SessionBuilder {
 						toDate);
 				SessionFactory.registerGlobalSession(session);
 			} else if (session instanceof StandaloneSession) {
-				processor = new Processor(is, fromDate, toDate);
+				processor = new Processor(is, fromDate, toDate, exceptionName);
 			}
 			session.setProcessor(processor);
 		} catch (Exception e) {
@@ -102,6 +103,11 @@ public class SessionBuilder {
 
 	public SessionBuilder fromDate(LocalDateTime fromdate) {
 		this.fromDate = fromdate;
+		return this;
+	}
+	
+	public SessionBuilder exceptionName(String exceptionName) {
+		this.exceptionName = exceptionName;
 		return this;
 	}
 

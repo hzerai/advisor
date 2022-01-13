@@ -27,8 +27,10 @@ public class ExceptionDataExtractor {
 		}
 		result.setDate(extractDate(mr.group(mapper.get("date")), parserProperties.get("date_format")));
 		result.setLevel(extractLevel(mr.group(mapper.get("level"))));
-		if(mapper.containsKey("name")) {
+		if(mapper.containsKey("message")) {
 			result.setMessage(mr.group(mapper.get("message")));
+		}else {
+			result.setMessage("empty");
 		}
 		result.setThread(mr.group(mapper.get("thread")));
 		result.setLogger(mr.group(mapper.get("logger")));

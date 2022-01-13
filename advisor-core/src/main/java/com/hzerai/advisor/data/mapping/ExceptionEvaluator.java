@@ -63,6 +63,18 @@ public class ExceptionEvaluator {
 	}
 
 	private String output = null;
+	private String key = null;
+
+	public String getKey() {
+		if (this.hint != null) {
+			return exception.getMessage() + this.hint + this.todo;
+		}
+		return exception.getName() + exception.getMessage();
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
 
 	public ExceptionEvaluator(TransientException exception, PersistentEvent event, MatchResult matchResult) {
 		this.exception = exception;
@@ -71,16 +83,10 @@ public class ExceptionEvaluator {
 		prepareOutput();
 	}
 
-	public String getKey() {
-		if (output != null && output.matches(".*:(\\d*|\\(confiscated\\))")) {
-			return output.substring(0, output.lastIndexOf(':'));
-		}
-		return output == null ? exception.toString().substring(180) : output;
-	}
-
 	private void prepareOutput() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(padRightSpaces(exception.getName(), 70));
+		sb.append(exception.getMessage());
 		sb.append(STRING_SPERATOR);
 
 		if (matchResult != null) {
@@ -102,6 +108,9 @@ public class ExceptionEvaluator {
 			this.hint = hint;
 			this.todo = todo;
 			sb.append(hint);
+			if (this.hint != null || this.todo != null) {
+				fillHintTodoFromStack(event);
+			}
 		} else if (event != null) {
 			sb.append(scanStacktrace(event));
 		} else {
@@ -174,6 +183,91 @@ public class ExceptionEvaluator {
 		return sb.toString();
 	}
 
+	private void fillHintTodoFromStack(PersistentEvent event) {
+		if (exception.getStackTrace() == null) {
+			return;
+		}
+		String[] lines = exception.getStackTrace().split(System.lineSeparator());
+		String business_stack = null;
+		boolean confiscated = false;
+		for (int i = 0; i < lines.length; i++) {
+			String l = lines[i].trim();
+			int atIndex = l.indexOf("at ");
+			if (atIndex < 0 || l.contains("Caused by")) {
+				continue;
+			}
+			l = l.substring(atIndex + 2).trim();
+			if (l.contains("//")) {
+				l = l.substring(l.indexOf("//") + 2);
+			}
+			String startPattern = "(";
+			for (String ip : event.getIgnorePackage().split(",")) {
+				startPattern = startPattern + ip + "|";
+			}
+			startPattern = startPattern.substring(0, startPattern.length() - 1) + ").*";
+			if (!l.matches(startPattern)) {
+				if (l.contains("[") && l.contains("]")) {
+					business_stack = l.substring(0, l.indexOf("]") + 1).trim();
+				} else {
+					business_stack = l.substring(0, l.indexOf(")") + 1).trim();
+				}
+				confiscated = business_stack.contains("Unknown Source");
+				break;
+			}
+		}
+		if (business_stack == null && lines.length > 1) {
+			business_stack = "";
+			String l = lines[1];
+			if (l.contains("[") && l.contains("]")) {
+				business_stack = l.substring(0, l.indexOf("]") + 1).trim();
+			} else {
+				business_stack = l.substring(0, l.indexOf(")") + 1).trim();
+			}
+			confiscated = business_stack.contains("Unknown Source");
+		} else if (business_stack == null) {
+			return;
+		}
+		String class_method = "class";
+		String business_class = "class";
+		String business_method = "method";
+		String line = "-1";
+		if (business_stack.contains("(")) {
+			class_method = business_stack.substring(0, business_stack.indexOf("("));
+			business_class = class_method.substring(0, class_method.lastIndexOf("."));
+			business_method = class_method.replace(business_class, "").substring(1);
+			business_method = "<init>".equals(business_method) ? "Constructor" : business_method;
+			line = confiscated ? "(confiscated)"
+					: business_stack.substring(business_stack.indexOf(".java:"), business_stack.indexOf(")"))
+							.replace(".java:", "");
+		}
+		String hint = this.hint;
+		hint = hint.replace("{method}", business_method);
+		hint = hint.replace("{class}", business_class);
+		hint = hint.replace("{line}", line);
+		hint = hint.replace("{message}", this.exception.getMessage());
+		String todo = this.todo;
+		todo = todo.replace("{method}", business_method);
+		todo = todo.replace("{class}", business_class);
+		todo = todo.replace("{line}", line);
+		todo = todo.replace("{message}", this.exception.getMessage());
+		if (hint.contains("{stack}") || todo.contains("{stack}")) {
+			StackTraceTokenizer tokenizer = new StackTraceTokenizer(this.exception.getStackTrace());
+			String stack = "|| " + System.lineSeparator();
+			String inputLine = null;
+			int i = 0;
+			tokenizer.nextLine();
+			while ((inputLine = tokenizer.nextLine()) != null && i < 25) {
+				i++;
+				stack = stack + "|| " + inputLine + System.lineSeparator();
+			}
+			stack = stack + "|| ";
+			hint = hint.replace("{stack}", stack);
+			todo = todo.replace("{stack}", stack);
+		}
+		this.hint = hint;
+		this.todo = todo;
+	}
+
 	private String scanStacktrace(PersistentEvent event) {
 		if (exception.getStackTrace() == null) {
 			return event.getHint();
@@ -188,10 +282,15 @@ public class ExceptionEvaluator {
 				continue;
 			}
 			l = l.substring(atIndex + 2).trim();
-			if(l.contains("//")) {
-				l = l.substring(l.indexOf("//")+2);
+			if (l.contains("//")) {
+				l = l.substring(l.indexOf("//") + 2);
 			}
-			if (!l.startsWith("java.") && !l.startsWith("org.") && !l.startsWith("sun.")) {
+			String startPattern = "(";
+			for (String ip : event.getIgnorePackage().split(",")) {
+				startPattern = startPattern + ip + "|";
+			}
+			startPattern = startPattern.substring(0, startPattern.length() - 1) + ").*";
+			if (!l.matches(startPattern)) {
 				if (l.contains("[") && l.contains("]")) {
 					business_stack = l.substring(0, l.indexOf("]") + 1).trim();
 				} else {
@@ -226,10 +325,12 @@ public class ExceptionEvaluator {
 		}
 		String hint = event.getHint().replace("{class}", business_class);
 		hint = hint.replace("{method}", business_method);
+		hint = hint.replace("{class}", business_class);
 		hint = hint.replace("{line}", line);
 		hint = hint.replace("{message}", this.exception.getMessage());
 		String todo = event.getTodo().replace("{class}", business_class);
 		todo = todo.replace("{method}", business_method);
+		todo = todo.replace("{class}", business_class);
 		todo = todo.replace("{line}", line);
 		todo = todo.replace("{message}", this.exception.getMessage());
 		if (hint.contains("{stack}") || todo.contains("{stack}")) {
@@ -245,13 +346,6 @@ public class ExceptionEvaluator {
 			stack = stack + "|| ";
 			hint = hint.replace("{stack}", stack);
 			todo = todo.replace("{stack}", stack);
-		}
-
-		if (hint.matches(".*:(\\d*|\\(confiscated\\))")) {
-			hint = hint.substring(0, hint.lastIndexOf(':'));
-		}
-		if (todo.matches(".*:(\\d*|\\(confiscated\\))")) {
-			todo = todo.substring(0, todo.lastIndexOf(':'));
 		}
 		this.hint = hint;
 		this.todo = todo;

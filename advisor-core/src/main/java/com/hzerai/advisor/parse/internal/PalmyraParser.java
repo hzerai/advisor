@@ -50,6 +50,9 @@ public class PalmyraParser implements LogParser {
 		AnalysisOutput output = new AnalysisOutput();
 		boolean hasCB = false;
 		while ((inputLine = lines.nextLine()) != null) {
+			if(inputLine.contains("security.securityModule.ignoreException")) {
+				continue;
+			}
 			matcher.reset(inputLine);
 			stack.append(inputLine).append(System.lineSeparator());
 			if (inputLine.contains("Caused by:") && !output.getResult().isEmpty()) {

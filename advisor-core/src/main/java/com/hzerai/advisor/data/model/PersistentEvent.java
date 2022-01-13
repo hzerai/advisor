@@ -3,6 +3,8 @@
  */
 package com.hzerai.advisor.data.model;
 
+import java.util.regex.Pattern;
+
 import com.hzerai.advisor.util.regex.RegexUtility;
 
 /**
@@ -21,6 +23,15 @@ public class PersistentEvent {
 	private int param_number = 0;
 	private String ifExistInStack = null;
 	private boolean def = false;
+	private String ignorePackage = "java.,org.,sun.";
+
+	public String getIgnorePackage() {
+		return ignorePackage;
+	}
+
+	public void setIgnorePackage(String ignorePackage) {
+		this.ignorePackage = ignorePackage;
+	}
 
 	public boolean isDebugSource() {
 		return debug_source;
@@ -47,13 +58,19 @@ public class PersistentEvent {
 	}
 
 	public void setMessageRegex(String messageRegex) {
-		if (messageRegex != null && messageRegex.indexOf('{') > -1 && messageRegex.indexOf('{') > 0) {
-			Object[] o = RegexUtility.transformParamToRE(new Object[] { messageRegex, 0 }, 0);
-			compiledRegex = (String) o[0];
-			param_number = (int) o[1];
-			compiledRegex = ".*" + compiledRegex + ".*";
+		if (messageRegex != null) {
+			String specialCharacters = "[()*+\\[\\]^|]";
+			Pattern p = Pattern.compile(specialCharacters);
+			this.compiledRegex = p.matcher(messageRegex).replaceAll(".");
+			if (this.compiledRegex.indexOf('{') > -1 && this.compiledRegex.indexOf('}') > 0) {
+				Object[] o = RegexUtility.transformParamToRE(new Object[] { this.compiledRegex, 0 }, 0);
+				this.compiledRegex = (String) o[0];
+				param_number = (int) o[1];
+			}
+			this.compiledRegex = ".*" + this.compiledRegex + ".*";
 		}
-		this.messageRegex = messageRegex;
+
+		this.messageRegex = this.compiledRegex;
 	}
 
 	public String getHint() {

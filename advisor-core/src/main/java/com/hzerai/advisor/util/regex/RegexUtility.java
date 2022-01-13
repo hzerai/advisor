@@ -18,7 +18,7 @@ public class RegexUtility {
 
 	public static Object[] transformParamToRE(Object[] result, int start) {
 		String text = (String) result[0];
-		if (text != null && !text.isEmpty() && text.indexOf('{') > -1 && text.indexOf('{') > 0) {
+		if (text != null && !text.isEmpty() && text.indexOf('{') > -1 && text.indexOf('}') > 0) {
 			start = text.indexOf('{', start);
 			int end = text.indexOf('}', start + 1) + 1;
 			String tbr = text.substring(start, end);

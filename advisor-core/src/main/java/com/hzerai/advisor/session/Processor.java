@@ -267,8 +267,9 @@ public class Processor {
 				if (er.getName() == null && er.getCausedBy().isEmpty()) {
 					continue;
 				}
-				if (exceptionName != null && !(er.getName().contains(exceptionName)
-						|| er.getCausedBy().stream().anyMatch(e -> e.contains(exceptionName)))) {
+				if (exceptionName != null && !(er.getName().toLowerCase().contains(exceptionName.toLowerCase())
+						|| er.getMessage().toLowerCase().contains(exceptionName.toLowerCase()) || er.getCausedBy()
+								.stream().anyMatch(e -> e.toLowerCase().contains(exceptionName.toLowerCase())))) {
 					continue;
 				}
 				if (er.getDate() != null) {
@@ -292,10 +293,10 @@ public class Processor {
 	}
 
 	private String createKey(ExceptionEvaluator ex) {
-		if (ex.getException().getMessage().equals("") || ex.getException().getMessage().matches("null|empty")) {
-			return ex.getException().getStackTrace();
-		}
-		return ex.getException().getMessage();
+//		if (ex.getException().getMessage().equals("") || ex.getException().getMessage().matches("null|empty")) {
+			return ex.getKey();
+//		}
+//		return ex.getException().getMessage();
 	}
 
 	public String padRightSpaces(Object input, int padSize) {

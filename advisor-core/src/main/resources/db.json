@@ -1,31 +1,31 @@
 [
 	{
-		"name": "java.sql.SQLException",
+		"name": "java.sql.SQLSyntaxErrorException",
 		"events": [
 			{
-				"messageRegex": "Transaction cannot proceed: {1}",
-				"hint": "Transaction coudn't commit and has status {1}",
-				"todo": "Check for RuntimeException during the same transaction"
-			},
-			{
-				"messageRegex": "(.*)Error checking for a transaction(.*)",
-				"hint": "Transaction is probably not active",
-				"todo": "Check for RuntimeException during the same transaction"
+				"messageRegex": "ORA-00904: \"{1}\".\"{2}\": invalid identifier",
+				"hint": "You tried to execute a SQL statement that included an invalid column name or the column name is missing. This commonly occurs when you reference an invalid alias in a SELECT statement.",
+				"todo": "Rewrite your SQL to include a valid column name. Your input was : table={1} , column={2}"
 			}
 		]
 	},
 	{
-		"name": "javax.resource.ResourceException",
+		"name": "java.sql.SQLIntegrityConstraintViolationException",
 		"events": [
 			{
-				"messageRegex": "Transaction cannot proceed: {1}",
-				"hint": "Transaction coudn't commit and has status {1}",
-				"todo": "Check for RuntimeException during the same transaction"
-			},
+				"messageRegex": "ORA-00001: unique constraint ({1}) violated",
+				"hint": "The ORA-00001 message is triggered when a unique constraint has been violated. Essentially the user causes the error when trying to execute an INSERT or UPDATE statement that has generated a duplicate value in a restricted field. The error can commonly be found when a program attempts to insert a duplicate row in a table.",
+				"todo": "The violated constraint is : {1}. Now that we know the constraint in question, we can move forward with fixing the problems itself. There are a few basic options. You can modify the SQL so that no duplicate values are created, thus no errors are triggered. If you do not wish to do this, you can also simply drop the table constraint altogether. This would only be recommended if the constraint is unnecessary for the foundation of your table."
+			}
+		]
+	},
+	{
+		"name": "javax.naming.NameNotFoundException",
+		"events": [
 			{
-				"messageRegex": "(.*)Error checking for a transaction(.*)",
-				"hint": "Transaction is probably not active",
-				"todo": "Check for RuntimeException during the same transaction"
+				"messageRegex": "{1} -- service {2}",
+				"hint": "This exception is thrown when a component of the name cannot be resolved because it is not bound.",
+				"todo": "Verify that the component {2} has started and have the correct configuration."
 			}
 		]
 	},
@@ -40,12 +40,158 @@
 		]
 	},
 	{
+		"name": "org.hibernate.StaleObjectStateException",
+		"events": [
+			{
+				"messageRegex": "Row was updated or deleted by another transaction (or unsaved-value mapping was incorrect) : [{1}#{2}]",
+				"hint": "In the same transaction, the developer has updated or removed an instance of {1} with code {2}, then he tried to update an old version of this instance.",
+				"todo": "If a record has been modified/deleted, the developer has to use the new version in the current process and not the old instance. It is up to the developer to find out where the instance of {1} has been first modified / deleted in the transaction and use later this modified instance."
+			}
+		]
+	},
+	{
+		"name": "javax.validation.ConstraintViolationException",
+		"events": [
+			{
+				"messageRegex": "The field {1} of the element {2} should match the specified size {3}",
+				"hint": "JSR 380 is a specification of the Java API for bean validation, part of Jakarta EE and JavaSE. This ensures that the properties of a bean meet specific criteria, using annotations such as @NotNull, @Min, and @Max.",
+				"todo": "The value of the field '{1} contained in the entity '{2}' needs to check the javax validation constraint '{3}'."
+			}
+		]
+	},
+	{
+		"name": "javax.persistence.EntityNotFoundException",
+		"events": [
+			{
+				"messageRegex": "Unable to find {1} with id {2}",
+				"hint": "There's three situations in which the persistence provider can throw the EntityNotFoundException: EntityManager.getReference on an entity that does not exist, EntityManager.refresh on an object that does not exist in the database, EntityManager.lock with pessimistic locking on an entity that does not exist in the database. Apart from these three use cases, there is one more case that is a bit more ambiguous. This exception can also occur when working with @ManyToOne relationships and lazy loading. When we use @ManyToOne annotation, then the referenced entity must exist. This is usually ensured with database integrity using foreign keys. If we don't use foreign keys in our relational model or our database is inconsistent, we can see EntityNotFoundException when fetching entities.",
+				"todo": "Either remove all references {1} with id {2}, or make sure that an instance of this type and code is available."
+			}
+		]
+	},
+	{
+		"name": "java.lang.IllegalStateException",
+		"events": [
+			{
+				"messageRegex": "Session/EntityManager is closed",
+				"hint": "The Entity Manager is an interface for the application to interact with the Persistence Context.There are two distinct types of Persistence Context: Container Managed and Application Managed.The Container Managed Persistence Context - as the name states - is managed by the enterprise container. The container is responsible for Persistence Context injection into enterprise components, and is also responsible for its disposal at the end of the current transaction.The Application Managed Persistence Context is managed by the application: The application is responsible for Persistence Context creation and disposal. The application is also required to ensure that the application created Persistence Context is aware of any eventual ongoing transaction.",
+				"todo": "Make sure to start a transaction or open the session before using it. If you are doing all of this correctly and the issue persist, it may be related to unsafe use of the session (Like Multithreading with lazy relations)"
+			}
+		]
+	},
+	{
 		"name": "org.hibernate.HibernateException",
 		"events": [
 			{
-				"hint": "invocation on null variable in {class}.{method}:{line}",
-				"todo": "check the variables in {class}.{method}:{line}",
+				"messageRegex": "Found shared references to a collection:{1}",
+				"hint": "Hibernate shows this error when you attempt to persist more than one entity instance sharing the same collection reference.",
+				"todo": "Note that it means the same collection, not collection element - in other words {1} on more than one of the relation must be the same. Perhaps you're resetting that collection after entities are loaded? Or you've initialized both references with the same collection instance?."
+			}
+		]
+	},
+	{
+		"name": "java.lang.ClassCastException",
+		"events": [
+			{
+				"messageRegex": "{1} cannot be cast to {2}",
+				"hint": "An attemp to cast an object to a related class, but of which it is not an instance.",
+				"todo": "{1} is not an instance of {2}. You can find the cast in {class}.{method}:{line}"
+			}
+		]
+	},
+	{
+		"name": "java.nio.channels.ClosedChannelException",
+		"events": [
+			{
+				"def": true,
+				"hint": "ClosedChannelException occurs when the write/read request you issued could not be done because the connection has been closed.",
+				"todo": "check if your application closed the connection somewhere else before you write the message or your peer closed the connection before reading your message.",
 				"moduleName": "{module}"
+			}
+		]
+	},
+	{
+		"name": "java.io.IOException",
+		"events": [
+			{
+				"messageRegex": "Connection reset by peer",
+				"hint": "Connection reset by peer that the write/read request you issued could not be done because the connection has been closed.",
+				"todo": "check if your application closed the connection somewhere else before you write/read the message or your peer closed the connection before reading your message.",
+				"moduleName": "{module}"
+			}
+		]
+	},
+	{
+		"name": "javax.wsdl.WSDLException",
+		"events": [
+			{
+				"messageRegex": "WSDLException: faultCode=PARSER_ERROR: Problem parsing '{1}'.: {2}",
+				"hint": "Could not connect to the WSDL Page {1} due to {2}",
+				"todo": "The source of the exception is a connection timeout. Make sure that the wsdl {1} is correct and online."
+			},
+			{
+				"messageRegex": "WSDLException: faultCode=PARSER_ERROR: Problem parsing '{1}'.: {2}",
+				"hint": "Could not connect to the WSDL Page {1} due to {2}",
+				"todo": "You need to fix {2} since it's the source of the wsdl parse exception",
+				"moduleName": "{module}"
+			}
+		]
+	},
+	{
+		"name": "com.ibm.msg.client.jms.DetailedInvalidDestinationException",
+		"events": [
+			{
+				"ifExistInStack": "JMSCMQ0001: IBM MQ call failed with compcode '2' ('MQCC_FAILED') reason '2053' ('MQRC_Q_FULL')",
+				"messageRegex": "JMSWMQ2007: Failed to send a message to destination '{1}'.",
+				"hint": "An MQPUT or MQPUT1 call, or a command, failed because the queue is full, that is, it already contains the maximum number of messages possible, as specified by the MaxQDepth queue attribute.",
+				"todo": "Retry the operation later. Consider increasing the maximum depth for the queue {1}, or arranging for more instances of the application to service the queue."
+			}
+		]
+	},
+	{
+		"name": "com.palmyra.arch.basicStruct.exception.PalmyraIllegalFormatException",
+		"events": [
+			{
+				"ifExistInStack": "CompositeValue.setValueASString",
+				"messageRegex": "Invalid ListValue string format",
+				"hint": "An an invalid format is found, while trying to construct a CompositeValue from a string.",
+				"todo": "Check you input when deserializing the CompositeValue in {class}.{method}:{line}",
+				"ignorePackage": "com.palmyra.arch.basicStruct.data.CompositeValue"
+			}
+		]
+	},
+	{
+		"name": "com.palmyra.arch.lifeCycle.LifeCycleException",
+		"events": [
+			{
+				"messageRegex": "PALM-42008: Error when running lifecycle",
+				"hint": "There was an error while executing the life-cycle of a Value",
+				"todo": "Check the exception that happened prior to this one"
+			}
+		]
+	},
+	{
+		"name": "com.palmyra.arch.exception.ProcessException",
+		"events": [
+			{
+				"messageRegex": "PALM-02077: Entity was modified by another user.",
+				"hint": "A concurrent update occured while synchronizing an entity.",
+				"todo": "If a record has been modified/deleted, the user has to use the new version of the instance and not the old one."
+			}
+		]
+	},
+	{
+		"name": "com.palmyra.arch.io.message.exceptions.ParserException",
+		"events": [
+			{
+				"messageRegex": "PALM-15053: The content {1} of the value {2} of {3} is not valid. It should verify this pattern {4}.",
+				"hint": "PALM-15053: The content {1} of the value {2} of {3} is not valid. It should verify this pattern {4}.",
+				"todo": "PALM-15053: The content {1} of the value {2} of {3} is not valid. It should verify this pattern {4}."
+			},
+			{
+				"messageRegex": "PALM-15053: The value {1} of the field {2} under {3} is not valid. It should verify this pattern ({4}).",
+				"hint": "PALM-15053: The value {1} of the field {2} under {3} is not valid. It should verify this pattern ({4}).",
+				"todo": "PALM-15053: The value {1} of the field {2} under {3} is not valid. It should verify this pattern ({4})."
 			}
 		]
 	},
@@ -79,6 +225,16 @@
 				"hint": "The property {1} is either null and required or an aggregation that's not merged with the JPA Context",
 				"todo": "check the value of the property {1} before synchronizing its parent",
 				"moduleName": "Persistence"
+			}
+		]
+	},
+	{
+		"name": "org.hibernate.TransientPropertyValueException",
+		"events": [
+			{
+				"messageRegex": "object references an unsaved transient instance - save the transient instance before flushing : {1} -> {2}",
+				"hint": "A synchronized instance has a reference to a non synchronized object.",
+				"todo": "Since the insert/update/delete operations are not cascaded in relations, before synchronizing an instance of {1}, the user should not set a transient instance of {2} : Either the instance is fetched from the database and then set to the instance of {1} or synchronize the {2} first and set the returned object to {1}."
 			}
 		]
 	},
@@ -200,6 +356,86 @@
 				"todo": "Go to {class}.{method}:{line} and fix your input for the Double method",
 				"hint": "Double method called with a wrong input : your input was {message}",
 				"ifExistInStack": "Double"
+			}
+		]
+	},
+	{
+		"name": "javax.persistence.TransactionRequiredException",
+		"events": [
+			{
+				"messageRegex": "WFLYJPA0060: Transaction is required to perform this operation (either use a transaction or extended persistence context)",
+				"hint": "This error typically occurs when we're trying to perform a database operation that modifies the database without a transaction.",
+				"todo": "It's a good practice to wrap database operations in a transaction. It helps in preventing data corruption.If you're already using a transactional behavior, than your transaction has ended (commited or rollbacked)"
+			}
+		]
+	},
+	{
+		"name": "java.sql.SQLException",
+		"events": [
+			{
+				"messageRegex": "Transaction cannot proceed: {1}",
+				"hint": "Transaction coudn't commit and has status {1}",
+				"todo": "Check for RuntimeException during the same transaction"
+			},
+			{
+				"messageRegex": "(.*)Error checking for a transaction(.*)",
+				"hint": "Transaction is probably not active",
+				"todo": "Check for RuntimeException during the same transaction"
+			},
+			{
+				"messageRegex": "IJ031041: Connection handle has been closed and is unusable",
+				"hint": "Unsafe use of Session. This happens when multiple thread are accessing the same instance of a jpa entity manager",
+				"todo": "While EntityManagerFactory is threadSafe, EntityManager itself is not. So Make sure your Multithreading work not using the same EM"
+			}
+		]
+	},
+	{
+		"name": "javax.resource.ResourceException",
+		"events": [
+			{
+				"messageRegex": "Transaction cannot proceed: {1}",
+				"hint": "Transaction coudn't commit and has status {1}",
+				"todo": "Check for RuntimeException during the same transaction"
+			},
+			{
+				"messageRegex": "IJ000460: Error checking for a transaction",
+				"hint": "Transaction is probably not active",
+				"todo": "Check for RuntimeException during the same transaction"
+			},
+			{
+				"messageRegex": "IJ000470: You are trying to use a connection factory that has been shut down: {1}",
+				"hint": "This is not a real issue, the server was shutting down when a database call was made to {1}.",
+				"todo": "Make sure that the failed sql request to {1} wont have consequences."
+			}
+		]
+	},
+	{
+		"name": "org.jboss.as.ejb3.component.EJBComponentUnavailableException",
+		"events": [
+			{
+				"messageRegex": "WFLYEJB0421: Invocation cannot proceed as component is shutting down",
+				"hint": "This is not a real issue, the server was shutting down when a request was made.",
+				"todo": "Make sure that the failed request has no consequences."
+			}
+		]
+	},
+	{
+		"name": "org.jboss.as.ee.component.ComponentIsStoppedException",
+		"events": [
+			{
+				"messageRegex": "WFLYEE0043: Component is stopped",
+				"hint": "This is not a real issue, the server was shutting down when a request was made.",
+				"todo": "Make sure that the failed request has no consequences."
+			}
+		]
+	},
+	{
+		"name": "java.lang.OutOfMemoryError",
+		"events": [
+			{
+				"def": true,
+				"hint": "One common indication of a memory leak is the java.lang.OutOfMemoryError exception. Usually, this error is thrown when there is insufficient space to allocate an object in the Java heap. In this case, The garbage collector cannot make space available to accommodate a new object, and the heap cannot be expanded further. Also, this error may be thrown when there is insufficient native memory to support the loading of a Java class. In a rare instance, a java.lang.OutOfMemoryError may be thrown when an excessive amount of time is being spent doing garbage collection and little memory is being freed.",
+				"todo": "An early step to diagnose an OutOfMemoryError exception is to determine the cause of the exception. Was it thrown because the Java heap is full, or because the native heap is full? To help you find the cause, the text of the exception includes a detail message at the end, as shown in the following exceptions."
 			}
 		]
 	}

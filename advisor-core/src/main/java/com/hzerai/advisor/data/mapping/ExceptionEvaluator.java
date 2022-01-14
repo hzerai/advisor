@@ -18,7 +18,7 @@ import com.hzerai.advisor.parse.internal.stacktrace.StackTraceTokenizer;
 public class ExceptionEvaluator {
 	protected static final String STRING_SPERATOR = "   |   ";
 	public static final String seperator = padRightSpaces(" ", 156, '=');
-	private final PersistentEvent event;
+	private PersistentEvent event;
 	private final TransientException exception;
 	private final MatchResult matchResult;
 	private ExceptionEvaluator child = null;
@@ -56,6 +56,10 @@ public class ExceptionEvaluator {
 
 	public PersistentEvent getEvent() {
 		return event;
+	}
+	
+	public void setEvent(PersistentEvent event) {
+		this.event = event;
 	}
 
 	public TransientException getException() {
@@ -225,6 +229,8 @@ public class ExceptionEvaluator {
 			}
 			confiscated = business_stack.contains("Unknown Source");
 		} else if (business_stack == null) {
+			hint = event.getHint();
+			todo = event.getTodo();
 			return;
 		}
 		String class_method = "class";
@@ -237,8 +243,8 @@ public class ExceptionEvaluator {
 			business_method = class_method.replace(business_class, "").substring(1);
 			business_method = "<init>".equals(business_method) ? "Constructor" : business_method;
 			line = confiscated ? "(confiscated)"
-					: business_stack.substring(business_stack.indexOf(".java:"), business_stack.indexOf(")"))
-							.replace(".java:", "");
+					: business_stack.substring(business_stack.indexOf(":", business_stack.indexOf("(")) + 1,
+							business_stack.indexOf(")"));
 		}
 		String hint = this.hint;
 		hint = hint.replace("{method}", business_method);
@@ -276,9 +282,10 @@ public class ExceptionEvaluator {
 		String business_stack = null;
 		boolean confiscated = false;
 		for (int i = 0; i < lines.length; i++) {
-			String l = lines[i];
+			String l = lines[i].trim();
+			;
 			int atIndex = l.indexOf("at ");
-			if (atIndex < 0) {
+			if (atIndex < 0 || l.contains("Caused by")) {
 				continue;
 			}
 			l = l.substring(atIndex + 2).trim();
@@ -309,6 +316,10 @@ public class ExceptionEvaluator {
 				business_stack = l.substring(0, l.indexOf(")") + 1).trim();
 			}
 			confiscated = business_stack.contains("Unknown Source");
+		} else if (business_stack == null) {
+			hint = event.getHint();
+			todo = event.getTodo();
+			return hint + todo;
 		}
 		String class_method = "class";
 		String business_class = "class";

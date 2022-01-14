@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -287,6 +288,18 @@ public class Processor {
 	public List<ExceptionEvaluator> clean(List<ExceptionEvaluator> set) {
 		return set.stream().collect(Collectors.toMap(this::createKey, Function.identity(), (old_, new_) -> {
 			((ExceptionEvaluator) new_).setChild((ExceptionEvaluator) old_);
+			ExceptionEvaluator o = (ExceptionEvaluator) old_;
+			ExceptionEvaluator n = (ExceptionEvaluator) new_;
+			String oldST = o.getException().getStackTrace();
+			String newST = n.getException().getStackTrace();
+			Set oldCB = o.getException().getCausedBy();
+			n.getException().getCausedBy().addAll(oldCB);
+			if (oldST != null && oldST.length() > newST.length()) {
+				n.getException().setStackTrace(oldST);
+			}
+			o.getException().setStackTrace(null);
+			o.setEvent(null);
+			o.getException().getCausedBy().clear();
 			return new_;
 		})).values().stream().sorted((e1, e2) -> e1.getException().getDate().compareTo(e2.getException().getDate()))
 				.collect(Collectors.toList());
@@ -294,7 +307,7 @@ public class Processor {
 
 	private String createKey(ExceptionEvaluator ex) {
 //		if (ex.getException().getMessage().equals("") || ex.getException().getMessage().matches("null|empty")) {
-			return ex.getKey();
+		return ex.getKey();
 //		}
 //		return ex.getException().getMessage();
 	}

@@ -87,11 +87,13 @@ public class PalmyraParser implements LogParser {
 				output.addResult(ex);
 			}
 		}
-		if (hasCB) {
-			output.getResult().get(output.getResult().size() - 1)
-					.setStackTrace(stack.toString().substring(stack.lastIndexOf("Caused by:")));
-		} else {
-			output.getResult().get(output.getResult().size() - 1).setStackTrace(stack.toString());
+		if (!output.getResult().isEmpty()) {
+			if (hasCB) {
+				output.getResult().get(output.getResult().size() - 1)
+						.setStackTrace(stack.toString().substring(stack.lastIndexOf("Caused by:")));
+			} else {
+				output.getResult().get(output.getResult().size() - 1).setStackTrace(stack.toString());
+			}
 		}
 		return output;
 	}

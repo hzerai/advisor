@@ -10,6 +10,16 @@
 		]
 	},
 	{
+		"name": "oracle.jdbc.OracleDatabaseException",
+		"events": [
+			{
+				"messageRegex": "ORA-01791: not a SELECTed expression",
+				"hint": "A select DISTINCT query and the order by column does not reference a select list item.",
+				"todo": "Rewrite your SQL to include a valid order by and select list."
+			}
+		]
+	},
+	{
 		"name": "java.sql.SQLIntegrityConstraintViolationException",
 		"events": [
 			{
@@ -53,9 +63,24 @@
 		"name": "javax.validation.ConstraintViolationException",
 		"events": [
 			{
+				"messageRegex": "PALM-03005: {1}",
+				"hint": "An old SLA is overlapping with the current SLA interval.",
+				"todo": "Check the assigned values of the context. {1}."
+			},
+			{
 				"messageRegex": "The field {1} of the element {2} should match the specified size {3}",
 				"hint": "JSR 380 is a specification of the Java API for bean validation, part of Jakarta EE and JavaSE. This ensures that the properties of a bean meet specific criteria, using annotations such as @NotNull, @Min, and @Max.",
 				"todo": "The value of the field '{1} contained in the entity '{2}' needs to check the javax validation constraint '{3}'."
+			}
+		]
+	},
+	{
+		"name": "javax.persistence.EntityExistsException",
+		"events": [
+			{
+				"messageRegex": "A different object with the same identifier value was already associated with the session : [{1}#{2}]",
+				"hint": "Most probably its because two objects are not referring to the same Java {1} object instance. They are referring to the same row in the database (i.e. the same primary key) but they're different copies of it.",
+				"todo": "One option would be to make sure that the Entities that refer to the same row are actually referring to the same object instance of {1}."
 			}
 		]
 	},
@@ -76,6 +101,46 @@
 				"messageRegex": "Session/EntityManager is closed",
 				"hint": "The Entity Manager is an interface for the application to interact with the Persistence Context.There are two distinct types of Persistence Context: Container Managed and Application Managed.The Container Managed Persistence Context - as the name states - is managed by the enterprise container. The container is responsible for Persistence Context injection into enterprise components, and is also responsible for its disposal at the end of the current transaction.The Application Managed Persistence Context is managed by the application: The application is responsible for Persistence Context creation and disposal. The application is also required to ensure that the application created Persistence Context is aware of any eventual ongoing transaction.",
 				"todo": "Make sure to start a transaction or open the session before using it. If you are doing all of this correctly and the issue persist, it may be related to unsafe use of the session (Like Multithreading with lazy relations)"
+			},
+			{
+				"messageRegex": "org.springframework.context.annotation.AnnotationConfigApplicationContext@{1} has been closed already",
+				"hint": "This is not a real issue, the spring context has shut down when a request was made.",
+				"todo": "Make sure that the failed request has no consequences."
+			},
+			{
+				"messageRegex": "UT000010: Session is invalid {1}",
+				"hint": "There are two reasons this exception occurs: 1) The application invalidates the session and then tries to access it on the same request. 2) Two threads within the JVM both gain access to the session object. One thread invalidates the session and then the other thread attempts to use the session object",
+				"todo": "Check the servlet or JavaServer Pages (JSP) that threw the exception to determine if the scenario described above applies to your situation."
+			}
+		]
+	},
+	{
+		"name": "org.hibernate.QueryException",
+		"events": [
+			{
+				"messageRegex": "could not resolve property: {1} of: {2} {3}",
+				"hint": "This exception occurs when Hibernate doesn't find a property of a mapped entity.",
+				"todo": "Make sure that the property {1} is mapped correctly in {2}. Properties are case sensitive."
+			}
+		]
+	},
+	{
+		"name": "com.palmyra.arch.basicStruct.exception.KeyNotFoundException",
+		"events": [
+			{
+				"messageRegex": "Required key {1} does not exist in {2}",
+				"hint": "Required key {1} does not exist in {2}.",
+				"todo": "Please declare the key '{1}' in the given class '{2}' or remove the cause of the invocation. Keys are case sensitive."
+			}
+		]
+	},
+	{
+		"name": "com.palmyra.arch.devices.input.InputDeviceException",
+		"events": [
+			{
+				"messageRegex": "No input device found with the device-ID {1}.",
+				"hint": "No input device found with the device-ID {1}.",
+				"todo": "Please check your input device config, the exception is thrown because it can't find your input device config {1}."
 			}
 		]
 	},
@@ -86,6 +151,11 @@
 				"messageRegex": "Found shared references to a collection:{1}",
 				"hint": "Hibernate shows this error when you attempt to persist more than one entity instance sharing the same collection reference.",
 				"todo": "Note that it means the same collection, not collection element - in other words {1} on more than one of the relation must be the same. Perhaps you're resetting that collection after entities are loaded? Or you've initialized both references with the same collection instance?."
+			},
+			{
+				"messageRegex": "null index column for collection: {1}.{2}",
+				"hint": "The list relation {2} in entity {1} has null values in its order column.",
+				"todo": "The order column purpose is to keep the insertion order for the relation. This might be caused by manual insertion of the relation {2}. Hibernate needs to save the owner {1} to update the order column."
 			}
 		]
 	},
@@ -116,8 +186,22 @@
 			{
 				"messageRegex": "Connection reset by peer",
 				"hint": "Connection reset by peer that the write/read request you issued could not be done because the connection has been closed.",
-				"todo": "check if your application closed the connection somewhere else before you write/read the message or your peer closed the connection before reading your message.",
-				"moduleName": "{module}"
+				"todo": "check if your application closed the connection somewhere else before you write/read the message or your peer closed the connection before reading your message."
+			},
+			{
+				"messageRegex": "No space left on device",
+				"hint": "This error is triggered if there is no space left in the directory which contains the Confluence Home folder. Usually happens in large instances with a high number of pages being created.",
+				"todo": "If the directory is full and you are unable to allocate more space, you may wish to change the location of your home directory to somewhere where there is space available."
+			}
+		]
+	},
+	{
+		"name": "com.sun.mail.util.MailConnectException",
+		"events": [
+			{
+				"messageRegex": "Couldn't connect to host, port: {1}, {2}; timeout -1",
+				"hint": "A MessagingException that indicates a socket connection attempt failed. Unlike java.net.ConnectException, it includes details of what we were trying to connect to. The underlying exception is available as the 'cause' of this exception..",
+				"todo": "This could be caused by wrong host name ({1}), wrong port ({2}), a blocking firewall (on the server, on gateways, even on your own machine), network failure, server downtime, etc.."
 			}
 		]
 	},
@@ -235,6 +319,16 @@
 				"messageRegex": "object references an unsaved transient instance - save the transient instance before flushing : {1} -> {2}",
 				"hint": "A synchronized instance has a reference to a non synchronized object.",
 				"todo": "Since the insert/update/delete operations are not cascaded in relations, before synchronizing an instance of {1}, the user should not set a transient instance of {2} : Either the instance is fetched from the database and then set to the instance of {1} or synchronize the {2} first and set the returned object to {1}."
+			}
+		]
+	},
+	{
+		"name": "org.hibernate.TransientObjectException",
+		"events": [
+			{
+				"messageRegex": "object references an unsaved transient instance - save the transient instance before flushing: {1}",
+				"hint": "A synchronized instance has a reference to a non synchronized object.",
+				"todo": "Since the insert/update/delete operations are not cascaded in relations, before synchronizing an instance of A, the user should not set a transient instance of {1} : Either the instance is fetched from the database and then set to the instance of A or synchronize the {1} first and set the returned object to A."
 			}
 		]
 	},
